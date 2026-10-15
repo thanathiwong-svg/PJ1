@@ -10,20 +10,7 @@ document.getElementById('profile-email').textContent = user.email;
 document.getElementById('profile-name').textContent = user.fullName || 'ผู้ใช้';
 document.getElementById('profile-avatar').textContent = (user.fullName || 'U').slice(0, 1).toUpperCase();
 document.querySelector('[name=fullName]').value = user.fullName;
-
-const verifyBox = document.getElementById('verify-box');
-if (user.emailVerified === false) {
-  verifyBox.innerHTML = '<div class="alert warn">อีเมลนี้ยังไม่ได้ยืนยัน (ต้องยืนยันก่อนจึงจะเช่าเครื่องได้) <a href="#" id="resend-verify">ส่งลิงก์ยืนยันอีกครั้ง</a></div>';
-  document.getElementById('resend-verify').addEventListener('click', async (e) => {
-    e.preventDefault();
-    try {
-      const data = await api('/auth/resend-verification', { method: 'POST' });
-      verifyBox.innerHTML = `<div class="alert ok">${data.message}</div>`;
-    } catch (err) {
-      verifyBox.innerHTML = `<div class="alert error">${err.message}</div>`;
-    }
-  });
-}
+document.querySelector('[name=phone]').value = user.phone || '';
 
 document.getElementById('profile-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -32,7 +19,8 @@ document.getElementById('profile-form').addEventListener('submit', async (e) => 
     const data = await api('/profile', {
       method: 'PUT',
       body: JSON.stringify({
-        fullName: form.get('fullName')
+        fullName: form.get('fullName'),
+        phone: form.get('phone')
       })
     });
     const token = getToken();

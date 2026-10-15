@@ -8,11 +8,11 @@ const getProfile = asyncHandler(async (req, res) => {
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
-  const { fullName } = req.body;
+  const { fullName, phone } = req.body;
   if (!fullName) {
     return res.status(400).json({ message: 'กรุณากรอกชื่อ' });
   }
-  const customer = await customerModel.updateProfile(req.user.customerId, { fullName });
+  const customer = await customerModel.updateProfile(req.user.customerId, { fullName, phone });
   res.json({ user: customerModel.mapCustomer(customer) });
 });
 
