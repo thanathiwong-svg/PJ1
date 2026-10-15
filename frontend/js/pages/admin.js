@@ -24,7 +24,7 @@ document.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach((t) => t.classList.remove('on'));
     tab.classList.add('on');
-    ['computers', 'customers', 'rentals', 'reservations', 'wallet', 'tickets'].forEach((name) => {
+    ['computers', 'customers', 'reservations', 'wallet', 'tickets'].forEach((name) => {
       document.getElementById(`panel-${name}`).classList.toggle('hidden', name !== tab.dataset.tab);
     });
   });
@@ -40,12 +40,12 @@ async function loadComputers() {
     ['รหัส', 'สเปก', 'ราคา', 'สถานะ', 'จัดการ'],
     computers.map((c) => `
       <tr>
-        <td>${c.computerCode}</td>
-        <td>${c.cpu} / ${c.ram} / ${c.gpu} / ${c.storage}</td>
+        <td>${escapeHtml(c.computerCode)}</td>
+        <td>${escapeHtml(c.cpu)} / ${escapeHtml(c.ram)} / ${escapeHtml(c.gpu)} / ${escapeHtml(c.storage)}</td>
         <td>${formatMoney(c.pricePerHour)}</td>
         <td>${statusLabel(c.status)}</td>
         <td>
-          <button class="btn secondary" data-edit='${JSON.stringify(c)}'>แก้ไข</button>
+          <button class="btn secondary" data-edit="${escapeHtml(JSON.stringify(c))}">แก้ไข</button>
           <button class="btn danger" data-del="${c.computerId}">ลบ</button>
         </td>
       </tr>`).join('')
@@ -114,7 +114,7 @@ document.getElementById('computer-form').addEventListener('submit', async (e) =>
     document.getElementById('form-title').textContent = 'เพิ่มเครื่อง';
     await loadComputers();
   } catch (err) {
-    msg.innerHTML = `<div class="alert error">${err.message}</div>`;
+    msg.innerHTML = `<div class="alert error">${escapeHtml(err.message)}</div>`;
   } finally {
     saveBtn.disabled = false;
     saveBtn.textContent = 'บันทึกเครื่อง';
@@ -132,20 +132,8 @@ async function loadCustomers() {
   document.getElementById('customer-table').innerHTML = table(
     ['ชื่อ', 'อีเมล', 'สิทธิ์', 'เครดิต'],
     customers.map((c) => `<tr>
-      <td>${c.fullName}</td><td>${c.email}</td><td>${c.role}</td>
+      <td>${escapeHtml(c.fullName)}</td><td>${escapeHtml(c.email)}</td><td>${escapeHtml(c.role)}</td>
       <td>${formatMoney(c.walletBalance)}</td>
-    </tr>`).join('')
-  );
-}
-
-async function loadRentals() {
-  const { rentals } = await api('/admin/rentals');
-  document.getElementById('rental-table').innerHTML = table(
-    ['เครื่อง', 'เริ่ม', 'สิ้นสุด', 'ชั่วโมง', 'ราคา', 'สถานะ'],
-    rentals.map((r) => `<tr>
-      <td>${r.computerCode}</td><td>${formatDateTime(r.startTime)}</td>
-      <td>${formatDateTime(r.endTime)}</td><td>${r.hours}</td>
-      <td>${formatMoney(r.price)}</td><td>${statusLabel(r.status)}</td>
     </tr>`).join('')
   );
 }
@@ -156,8 +144,8 @@ async function loadReservations() {
   document.getElementById('reservation-table').innerHTML = table(
     ['ลูกค้า', 'เครื่อง', 'เริ่ม', 'สิ้นสุด', 'ราคา', 'สถานะ'],
     reservations.map((r) => `<tr>
-      <td>${r.customerName}</td>
-      <td>${r.computerCode}</td>
+      <td>${escapeHtml(r.customerName)}</td>
+      <td>${escapeHtml(r.computerCode)}</td>
       <td>${formatDateTime(r.startTime)}</td>
       <td>${formatDateTime(r.endTime)}</td>
       <td>${formatMoney(r.totalPrice)}</td>
@@ -171,8 +159,8 @@ async function loadWallet() {
   document.getElementById('wallet-table').innerHTML = table(
     ['ลูกค้า', 'ประเภท', 'จำนวน', 'รายละเอียด', 'วันที่'],
     transactions.map((t) => `<tr>
-      <td>${t.customerName}</td><td>${t.type}</td>
-      <td>${formatMoney(t.amount)}</td><td>${t.description}</td>
+      <td>${escapeHtml(t.customerName)}</td><td>${escapeHtml(t.type)}</td>
+      <td>${formatMoney(t.amount)}</td><td>${escapeHtml(t.description)}</td>
       <td>${formatDateTime(t.createdAt)}</td>
     </tr>`).join('')
   );
@@ -299,30 +287,25 @@ async function loadTickets() {
 
 async function loadAdminDashboard() {
   try {
-    const [computerData, customerData, rentalData, reservationData, walletData, ticketData] = await Promise.all([
+    const [computerData, customerData, reservationData, walletData, ticketData] = await Promise.all([
       api('/computers'),
       api('/admin/customers'),
-      api('/admin/rentals'),
       api('/admin/reservations'),
       api('/admin/transactions'),
       api('/admin/tickets')
     ]);
-    updateStats({ computers: computerData.computers || [], customers: customerData.customers || [], rentals: rentalData.rentals || [], tickets: ticketData.tickets || [] });
+    updateStats({ computers: computerData.computers || [], customers: customerData.customers || [], tickets: ticketData.tickets || [] });
     await loadComputers();
     document.getElementById('customer-table').innerHTML = table(
       ['ชื่อ', 'อีเมล', 'สิทธิ์', 'เครดิต'],
-      (customerData.customers || []).map((c) => `<tr><td>${c.fullName}</td><td>${c.email}</td><td>${c.role}</td><td>${formatMoney(c.walletBalance)}</td></tr>`).join('')
-    );
-    document.getElementById('rental-table').innerHTML = table(
-      ['เครื่อง', 'เริ่ม', 'สิ้นสุด', 'ชั่วโมง', 'ราคา', 'สถานะ'],
-      (rentalData.rentals || []).map((r) => `<tr><td>${r.computerCode}</td><td>${formatDateTime(r.startTime)}</td><td>${formatDateTime(r.endTime)}</td><td>${r.hours}</td><td>${formatMoney(r.price)}</td><td>${statusLabel(r.status)}</td></tr>`).join('')
+      (customerData.customers || []).map((c) => `<tr><td>${escapeHtml(c.fullName)}</td><td>${escapeHtml(c.email)}</td><td>${escapeHtml(c.role)}</td><td>${formatMoney(c.walletBalance)}</td></tr>`).join('')
     );
     document.getElementById('reservation-table').innerHTML = table(
   ['ลูกค้า', 'เครื่อง', 'เริ่ม', 'สิ้นสุด', 'ราคา', 'สถานะ'],
   (reservationData.reservations || []).map((r) => `
     <tr>
-      <td>${r.customerName}</td>
-      <td>${r.computerCode}</td>
+      <td>${escapeHtml(r.customerName)}</td>
+      <td>${escapeHtml(r.computerCode)}</td>
       <td>${formatDateTime(r.startTime)}</td>
       <td>${formatDateTime(r.endTime)}</td>
       <td>${formatMoney(r.totalPrice)}</td>
@@ -333,11 +316,11 @@ async function loadAdminDashboard() {
     document.querySelectorAll('[data-res]').forEach((sel) => sel.addEventListener('change', async () => { try { await api(`/admin/reservations/${sel.dataset.res}`, { method: 'PUT', body: JSON.stringify({ status: sel.value }) }); } catch (err) { alert(err.message); } }));
     document.getElementById('wallet-table').innerHTML = table(
       ['ลูกค้า', 'ประเภท', 'จำนวน', 'รายละเอียด', 'วันที่'],
-      (walletData.transactions || []).map((t) => `<tr><td>${t.customerName}</td><td>${t.type}</td><td>${formatMoney(t.amount)}</td><td>${t.description}</td><td>${formatDateTime(t.createdAt)}</td></tr>`).join('')
+      (walletData.transactions || []).map((t) => `<tr><td>${escapeHtml(t.customerName)}</td><td>${escapeHtml(t.type)}</td><td>${formatMoney(t.amount)}</td><td>${escapeHtml(t.description)}</td><td>${formatDateTime(t.createdAt)}</td></tr>`).join('')
     );
     await loadTickets();
   } catch (err) {
-    document.querySelector('.admin-panels').insertAdjacentHTML('afterbegin', `<div class="alert error">โหลดข้อมูลแอดมินไม่สำเร็จ: ${err.message}</div>`);
+    document.querySelector('.admin-panels').insertAdjacentHTML('afterbegin', `<div class="alert error">โหลดข้อมูลแอดมินไม่สำเร็จ: ${escapeHtml(err.message)}</div>`);
   }
 }
 

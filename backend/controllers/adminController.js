@@ -30,7 +30,18 @@ const deleteComputer = asyncHandler(async (req, res) => {
 });
 
 const customers = asyncHandler(async (req, res) => {
-  res.json({ customers: await customerModel.listAll() });
+  const maskEmail = (email = '') => {
+    const value = String(email);
+    const at = value.indexOf('@');
+    if (at < 0) return '****';
+    const local = value.slice(0, at);
+    const domain = value.slice(at + 1);
+    const dot = domain.indexOf('.');
+    const maskedDomain = dot < 0 ? '***' : '***' + domain.slice(dot);
+    return local.slice(0, 3) + '****@' + maskedDomain;
+  };
+  const list = await customerModel.listAll();
+  res.json({ customers: list.map((c) => ({ ...c, email: maskEmail(c.email) })) });
 });
 
 const rentals = asyncHandler(async (req, res) => {
